@@ -5,13 +5,19 @@ from io import BytesIO
 import pandas as pd
 
 def write_to_excel(df, output):
-    template_path = "concrete_cube_report_tool/templates/Concrete-strength-statistic-Superstructure.xlsx"
+    template_path = "templates/Concrete-strength-statistic-Superstructure.xlsx"
     wb = load_workbook(template_path)
     ws = wb.active
 
     start_row = 5  # Adjust as needed
     last_loc = None
     loc_start_row = start_row
+    i = start_row - 1  # Initialize i to prevent UnboundLocalError
+
+    # Check if DataFrame is empty
+    if df.empty:
+        wb.save(output)
+        return
 
     for i, row in enumerate(df.itertuples(index=False), start=start_row):
         ws[f"B{i}"] = row.B
@@ -32,7 +38,8 @@ def write_to_excel(df, output):
             last_loc = row.O
             loc_start_row = i
 
-    if loc_start_row != i:
+    # Only merge cells if we have data and the last location needs merging
+    if i >= start_row and loc_start_row != i:
         ws.merge_cells(f"O{loc_start_row}:O{i}")
         ws[f"O{loc_start_row}"].alignment = Alignment(vertical="center", wrap_text=True)
 
