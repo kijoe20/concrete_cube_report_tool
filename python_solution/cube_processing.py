@@ -73,7 +73,7 @@ def merge_every_two(ws: Worksheet, col_letter: str) -> None:
 
 def run_all() -> None:
     """Main execution function that orchestrates the entire processing workflow."""
-    INPUT_FILE = "cube_data.xlsx"
+    INPUT_FILE = "templates/cube_data_06.xlsx"
     OUTPUT_FILE = "cube_data_processed.xlsx"
     
     try:
