@@ -5,7 +5,7 @@ This project provides two solutions for automating concrete cube test report pro
 ## Current Status
 
 **✅ VBA Solution**: Fully functional and ready to use
-**🔄 Python Solution**: Fully functional and ready to use  
+**🔄 Python Solution**: Fully functional and ready to use
 **🚧 Streamlit Solution**: Under development (new web interface)
 
 ## Solutions
@@ -76,7 +76,9 @@ concrete_cube_report_tool/
 │   ├── modCubeProcessing.bas
 │   └── README.md
 ├── python_solution/       # Working Python solution
-│   └── [Python solution files]
+│   ├── cube_processing.py
+│   ├── requirements.txt
+│   └── README.md
 ├── streamlit_solution/    # Streamlit web app (under development)
 │   ├── app.py            # Main Streamlit application
 │   ├── extract_pdf_future.py
@@ -86,10 +88,10 @@ concrete_cube_report_tool/
 │   ├── templates/        # Excel template files
 │   ├── requirements.txt  # Python dependencies
 │   ├── environment.yml   # Conda environment file
-│   ├── run.bat          # Windows batch file for running Streamlit
-│   └── setup.bat        # Windows batch file for setup
-├── README.md            # Project documentation
-└── .gitignore          # Git ignore rules
+│   ├── run.bat           # Windows batch file for running Streamlit
+│   └── setup.bat         # Windows batch file for setup
+├── README.md             # Project documentation
+└── .gitignore            # Git ignore rules
 ```
 
 ## Dependencies
