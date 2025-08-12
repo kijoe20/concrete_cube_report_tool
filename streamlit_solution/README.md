@@ -21,11 +21,7 @@ This is a Streamlit-based web application that provides a modern web interface f
 
 ### Setup with Conda (Recommended)
 
-1. Navigate to the `streamlit_solution/` directory:
-
-```bash
-cd streamlit_solution
-```
+1. Navigate to the `streamlit_solution/` directory
 
 2. Create and activate conda environment:
 
@@ -42,11 +38,7 @@ pip install -r requirements.txt
 
 ### Setup with pip
 
-1. Navigate to the `streamlit_solution/` directory:
-
-```bash
-cd streamlit_solution
-```
+1. Navigate to the `streamlit_solution/` directory
 
 2. Create virtual environment:
 
@@ -104,9 +96,9 @@ streamlit_solution/
 │   └── Concrete-strength-statistic-Superstructure.xlsx
 ├── requirements.txt       # Python dependencies
 ├── environment.yml        # Conda environment file
-├── run.bat               # Windows batch file for running Streamlit
-├── setup.bat             # Windows batch file for setup
-└── README.md             # This file
+├── run.bat                # Windows batch file for running Streamlit
+├── setup.bat              # Windows batch file for setup
+└── README.md              # This file
 ```
 
 ## Development Status
