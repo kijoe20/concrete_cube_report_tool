@@ -47,8 +47,8 @@ def split_by_type(wb: Workbook) -> None:
         if t_type in targets:
             targets[t_type].append([cell.value for cell in r])
 
-def merge_pour_locations(ws: Worksheet, col_letter: str = "G") -> None:
-    """Merge consecutive cells with the same value in pour location column (G) vertically."""
+def merge_same (ws: Worksheet, col_letter: str) -> None:
+    """Merge consecutive cells with the same value in the column vertically."""
     col = ws[col_letter]
     i, last = 2, ws.max_row
     while i <= last:
@@ -90,7 +90,9 @@ def run_all() -> None:
 
         for name in TARGET_SHEETS:
             ws = wb[name]
-            merge_pour_locations(ws, "G")
+            merge_same (ws, "D")
+            merge_same (ws, "E")
+            merge_same (ws, "G")
             merge_every_two(ws, "A")
             merge_every_two(ws, "B")
 
