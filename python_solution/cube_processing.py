@@ -90,11 +90,11 @@ def run_all() -> None:
 
         for name in TARGET_SHEETS:
             ws = wb[name]
-            merge_same (ws, "D")
-            merge_same (ws, "E")
-            merge_same (ws, "G")
             merge_every_two(ws, "A")
             merge_every_two(ws, "B")
+            merge_every_two(ws, "D")
+            merge_every_two(ws, "E")
+            merge_same (ws, "G")
 
         wb.save(OUTPUT_FILE)
         print(f"Processing complete. Output saved to '{OUTPUT_FILE}'.")
