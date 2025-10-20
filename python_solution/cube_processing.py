@@ -73,8 +73,8 @@ def merge_every_two(ws: Worksheet, col_letter: str) -> None:
 
 def run_all() -> None:
     """Main execution function that orchestrates the entire processing workflow."""
-    INPUT_FILE = "python_solution/cube_data_06.xlsx" #Replace with the name of the input file
-    OUTPUT_FILE = "python_solution/cube_data_processed.xlsx" #Replace with the name of the output file
+    INPUT_FILE = "cube_data.xlsx" #Replace with the name of the input file
+    OUTPUT_FILE = "cube_data_processed.xlsx" #Replace with the name of the output file
     
     try:
         wb = load_workbook(INPUT_FILE)
