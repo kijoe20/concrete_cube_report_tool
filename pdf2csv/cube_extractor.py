@@ -280,6 +280,48 @@ def extract_all_cubes_from_pdf(page_text: str, page_number: int) -> List[Dict[st
                     i += 2
                     continue
 
+        # CASE 4: Base cube mark without number/suffix, full identifier on next line
+        # Pattern: CU###### YYYYMMDD-TYPE- ... STRENGTH1 STRENGTH2 S -
+        # Next line: "-"+NUMBER+LETTER
+        # Example:
+        #   CU058595 20250802-45DWP 45/20 PFA+WP 150 / 160 100.2 x 100.2 x 100.1 2.406 2390 609.2 60.7 S -
+        #   -1A
+        case4_match = re.search(
+            r'CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-',
+            line
+        )
+        
+        if case4_match:
+            # Check if next line exists and matches "-"+NUMBER+LETTER pattern
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                id_match = re.match(r'-\s*(\d+)([A-Z])$', next_line)
+                
+                if id_match:
+                    cube_mark_base = case4_match.group(1)  # e.g., "20250802-45DWP"
+                    number = id_match.group(1)             # e.g., "1"
+                    suffix = id_match.group(2)             # e.g., "A"
+                    strength = case4_match.group(3)        # Second number (e.g., 60.7)
+                    
+                    # Construct full cube mark
+                    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
+                    prefix, _, _ = split_cube_mark(full_cube_mark)
+                    
+                    cubes.append({
+                        'prefix': prefix,
+                        'number': number,
+                        'suffix': suffix,
+                        'report_number': report_number,
+                        'date_cast': date_cast,
+                        'strength': strength,
+                        'pour_location': pour_location
+                    })
+                    
+                    # Skip the next line since we've processed it
+                    i += 2
+                    continue
+
+
         # Move to next line if no match found
         i += 1
     
