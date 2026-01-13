@@ -140,7 +140,7 @@ def extract_all_cubes_from_pdf(page_text: str, page_number: int) -> List[Dict[st
     """
     Extract all cube test data from a single page.
     
-    Handles two formats:
+    Handles following formats:
     Case 1: Suffix on same line
         CU058493 20250801-60D-6A 60/20D PFA 200 / 230 ... 795.6 79.2 S -
         
@@ -151,6 +151,15 @@ def extract_all_cubes_from_pdf(page_text: str, page_number: int) -> List[Dict[st
     Case 3: Base cube mark on one line, full identifier on next line
         CU058595 20250802-45DWP- 45/20 PFA+WP 150 / 160 ... 609.2 60.7 S -
         1A
+
+    Case 4: Base cube mark on one line, full identifier on next line with dash
+        CU058595 20250802-45DWP 45/20 PFA+WP 150 / 160 ... 609.2 60.7 S -
+        -1A
+
+    Case 5:Base cube mark on one line, full identifier on next next line
+        CU804963 20251115-45DWP 45/20D PFA Krystaline 150 / 175 ... 649.4 64.7 S -
+        Add Plus 2.5
+        -1A
 
     Args:
         page_text: The extracted text from the PDF page
@@ -321,6 +330,49 @@ def extract_all_cubes_from_pdf(page_text: str, page_number: int) -> List[Dict[st
                     i += 2
                     continue
 
+        # CASE 5: Base cube mark without number/suffix, full identifier on next next line
+        # Pattern: CU###### YYYYMMDD-TYPE- ... STRENGTH1 STRENGTH2 S -
+        # Next line: Additional info (ignored)
+        # Next next line: "-"+NUMBER+LETTER
+        # Example:
+        #   CU804963 20251115-45DWP 45/20D PFA Krystaline 150 / 175 100.0 x 100.1 x 100.2 2.410 2410 649.4 64.7 S -
+        #   Add Plus 2.5
+        #   -1A
+        case5_match = re.search(
+            r'CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-',
+            line
+        )
+
+        if case5_match:
+            # Check if next next line exists and matches "-"+NUMBER+LETTER pattern
+            if i + 2 < len(lines):
+                next_line = lines[i + 1].strip()
+                next_next_line = lines[i + 2].strip()
+                id_match = re.match(r'-\s*(\d+)([A-Z])$', next_next_line)
+
+                if id_match:
+                    cube_mark_base = case5_match.group(1)  # e.g., "20251115-45DWP"
+                    number = id_match.group(1)             # e.g., "1"
+                    suffix = id_match.group(2)             # e.g., "A"
+                    strength = case5_match.group(3)        # Second number (e.g., 64.7)
+
+                    # Construct full cube mark
+                    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
+                    prefix, _, _ = split_cube_mark(full_cube_mark)
+
+                    cubes.append({
+                        'prefix': prefix,
+                        'number': number,
+                        'suffix': suffix,
+                        'report_number': report_number,
+                        'date_cast': date_cast,
+                        'strength': strength,
+                        'pour_location': pour_location
+                    })
+
+                    # Skip the next two lines since we've processed them
+                    i += 3
+                    continue
 
         # Move to next line if no match found
         i += 1
