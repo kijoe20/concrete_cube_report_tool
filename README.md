@@ -1,138 +1,121 @@
 # Concrete Cube Test Report Automation Tool
 
-This project provides two solutions for automating concrete cube test report processing:
+This repository contains multiple workflows for extracting concrete cube test
+data from PDF reports and generating formatted Excel workbooks. Choose the
+approach that best fits your tooling (Excel/VBA, command line, or web UI).
 
-## Current Status
+## Solution overview
 
-**✅ VBA Solution**: Fully functional and ready to use
-**🔄 Python Solution**: Fully functional and ready to use
-**🚧 Streamlit Solution**: Under development (new web interface)
+| Solution | Purpose | Status | Directory |
+| --- | --- | --- | --- |
+| Unified Python | End-to-end PDF to Excel with validation and batch mode | Stable, recommended | `unified_solution/` |
+| PDF to CSV extractor | Extracts pipe-delimited cube data for custom pipelines | Stable | `pdf2csv/` |
+| Python Excel processor | Formats an existing Raw worksheet into 45D/60D sheets | Stable | `python_solution/` |
+| VBA Excel macro | Formats data inside an Excel template | Stable, no further updates | `VBA_solution/` |
+| Streamlit web app | Web UI for extraction and report generation | Under development | `streamlit_solution/` |
 
-## Solutions
+## Recommended workflow (Unified Python solution)
 
-### 1. VBA Solution (WORKING - NO FURTHER UPDATES)
+1. Install dependencies:
+   ```bash
+   cd unified_solution
+   pip install -r requirements.txt
+   ```
+2. Run a single PDF:
+   ```bash
+   python -m unified_solution input.pdf output.xlsx
+   ```
+3. Optional: batch processing with validation:
+   ```bash
+   python -m unified_solution ./pdfs/ --folder --output-dir ./reports --validate
+   ```
 
-A VBA-based solution that processes concrete cube test data directly within Excel using macros and automation.
+## Other workflows
 
-**Features:**
+### VBA solution (Excel users)
+1. Open `VBA_solution/ConcreteCubeReportTemplate.xlsm` in Excel.
+2. Enable macros and run the `RunAllProcessingSteps` macro.
+3. See `VBA_solution/README.md` for details.
 
-- **PDF Data Extraction**: Automatically extracts concrete cube test data from PDF reports
-- **Interactive Data Editor**: Edit and validate extracted data through Excel interface
-- **Excel Report Generation**: Creates formatted Excel reports using predefined templates
-- **Dynamic Data Handling**: Supports variable number of data rows
+### PDF to CSV extractor
+1. Install dependencies in `pdf2csv/`.
+2. Run `python cube_extractor.py <input_pdf> <output_csv>`.
+3. See `pdf2csv/README.md` for output format details.
 
-**Status**: This solution is complete and will not receive further updates.
+### Python Excel processor
+1. Place an input workbook named `cube_data.xlsx` (with a `Raw` sheet) next to `cube_processing.py`.
+2. Run `python cube_processing.py`.
+3. See `python_solution/README.md` for requirements and behavior.
 
-### 2. Python Solution (WORKING)
+### Streamlit web app (under development)
+Follow setup and usage instructions in `streamlit_solution/README.md`.
 
-A Python-based solution that processes concrete cube test data using command-line tools and automation.
-
-**Features:**
-
-- **PDF Data Extraction**: Automatically extracts concrete cube test data from PDF reports
-- **Data Processing**: Processes and validates extracted data
-- **Excel Report Generation**: Creates formatted Excel reports using predefined templates
-- **Batch Processing**: Supports processing multiple files
-
-### 3. Streamlit Solution (UNDER DEVELOPMENT)
-
-A Streamlit-based web application that provides a modern web interface for the concrete cube test automation.
-
-**Features (planned):**
-
-- **Web Interface**: User-friendly web-based interface
-- **PDF Data Extraction**: Automatically extracts concrete cube test data from PDF reports
-- **Interactive Data Editor**: Edit and validate extracted data through a web interface
-- **Excel Report Generation**: Creates formatted Excel reports using predefined templates
-- **Dynamic Data Handling**: Supports variable number of data rows
-
-## Installation & Usage
-
-### VBA Solution (Recommended for Excel Users)
-
-1. Navigate to the `VBA_solution/` directory
-2. Open `ConcreteCubeReportTemplate.xlsm` in Microsoft Excel
-3. Enable macros when prompted
-4. Follow the instructions in the VBA solution README
-
-### Python Solution (Recommended for Command Line Users)
-
-1. Navigate to the `python_solution/` directory
-2. Follow the installation and usage instructions in the Python solution README
-
-### Streamlit Solution (Under Development)
-
-**Note: This solution is still under development and may not be fully functional.**
-
-1. Navigate to the `streamlit_solution/` directory
-2. Follow the installation and usage instructions in the Streamlit solution README
-
-## Project Structure
+## Project structure
 
 ```
-concrete_cube_report_tool/
-├── VBA_solution/          # Working VBA solution (no further updates)
-│   ├── ConcreteCubeReportTemplate.xlsm
-│   ├── modCubeProcessing.bas
+.
+├── pdf2csv/
+│   ├── cube_extractor.py
+│   ├── quick_debug.py
+│   ├── example_output.csv
+│   ├── requirements.txt
 │   └── README.md
-├── python_solution/       # Working Python solution
+├── python_solution/
 │   ├── cube_processing.py
 │   ├── requirements.txt
 │   └── README.md
-├── streamlit_solution/    # Streamlit web app (under development)
-│   ├── app.py            # Main Streamlit application
+├── streamlit_solution/
+│   ├── app.py
 │   ├── extract_pdf_future.py
 │   ├── extract_text.py
 │   ├── extract_text_1.py
 │   ├── write_excel.py
-│   ├── templates/        # Excel template files
-│   ├── requirements.txt  # Python dependencies
-│   ├── environment.yml   # Conda environment file
-│   ├── run.bat           # Windows batch file for running Streamlit
-│   └── setup.bat         # Windows batch file for setup
-├── README.md             # Project documentation
-└── .gitignore            # Git ignore rules
+│   ├── requirements.txt
+│   ├── environment.yml
+│   ├── run.bat
+│   ├── setup.bat
+│   └── README.md
+├── unified_solution/
+│   ├── __main__.py
+│   ├── cube_automation.py
+│   ├── config.py
+│   ├── requirements.txt
+│   ├── process_batch.bat
+│   ├── modules/
+│   ├── templates/
+│   └── README.md
+├── VBA_solution/
+│   ├── ConcreteCubeReportTemplate.xlsm
+│   ├── modCubeProcessing.bas
+│   └── README.md
+└── README.md
 ```
 
 ## Dependencies
 
-### VBA Solution
+- Python 3.8+ is recommended for the Python-based tools.
+- Each solution has its own `requirements.txt` or environment file. Refer to the
+  README in the corresponding directory.
 
-- Microsoft Excel with VBA support enabled
-- No additional dependencies required
+## Data format (common fields)
 
-### Python Solution
+Most workflows extract or emit the following fields:
 
-- Python 3.8 or higher
-- Required packages listed in `python_solution/requirements.txt`
-
-### Streamlit Solution (Under Development)
-
-- Python 3.8 or higher
-- **streamlit**: Web application framework
-- **PyMuPDF**: PDF processing and text extraction
-- **pandas**: Data manipulation and analysis
-- **openpyxl**: Excel file generation and manipulation
-
-## Data Format
-
-The tool extracts the following data fields from PDF reports:
-
-- Cube ID (CU number)
-- Cube Mark (prefix, number, suffix)
-- Report Number
-- Date Cast
-- Strength values
-- Pour Location
+- Cube mark (prefix, number, suffix)
+- Report number
+- Date cast
+- Compressive strength
+- Pour location
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Test thoroughly.
+5. Submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for
+details.
