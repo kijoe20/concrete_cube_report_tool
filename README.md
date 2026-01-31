@@ -43,7 +43,7 @@ approach that best fits your tooling (Excel/VBA, command line, or web UI).
 3. See `pdf2csv/README.md` for output format details.
 
 ### Python Excel processor
-1. Place an input workbook with a `Raw` sheet next to `cube_processing.py`.
+1. Place an input workbook named `cube_data.xlsx` (with a `Raw` sheet) next to `cube_processing.py`.
 2. Run `python cube_processing.py`.
 3. See `python_solution/README.md` for requirements and behavior.
 
