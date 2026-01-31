@@ -116,6 +116,18 @@ def _setup_logging(log_path: Path) -> logging.Logger:
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
+    # Also configure the pdf_extractor module logger to use the same handlers
+    # so per-page cube counts appear in the log
+    module_logger = logging.getLogger("unified_solution.modules.pdf_extractor")
+    module_logger.setLevel(logging.INFO)
+    module_logger.handlers = []
+    module_logger.propagate = False  # Prevent duplicate logs
+    # Create separate handlers for the module logger pointing to the same file
+    module_file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    module_file_handler.setFormatter(formatter)
+    module_logger.addHandler(module_file_handler)
+    module_logger.addHandler(stream_handler)
+
     logger.info("Log file: %s", log_path)
     return logger
 
