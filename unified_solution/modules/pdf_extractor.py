@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 try:
     import pdfplumber
@@ -15,6 +16,15 @@ except ImportError as exc:  # pragma: no cover - handled at runtime
     ) from exc
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ParsingCase:
+    """Represents a single parsing pattern case for cube data extraction."""
+
+    name: str
+    pattern: str
+    handler: Callable[[re.Match, List[str], int], Optional[Tuple[Dict[str, str], int]]]
 
 
 def parse_cube_mark(cube_mark: str) -> Tuple[str, str, str]:
@@ -127,7 +137,126 @@ def _build_cube_record(
     }
 
 
+def _handle_case1(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 1: Full cube mark on single line (e.g., 20250621-45D-1A)."""
+    full_cube_mark = match.group(1)
+    strength = match.group(3)
+    prefix, number, suffix = parse_cube_mark(full_cube_mark)
+    cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 1
+
+
+def _handle_case2(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 2: Cube mark without suffix, suffix on next line (e.g., 20250621-45D-1 then A)."""
+    if i + 1 >= len(lines):
+        return None
+    next_line = lines[i + 1].strip()
+    if not (len(next_line) == 1 and next_line.isalpha() and next_line.isupper()):
+        return None
+    cube_mark_base = match.group(1)
+    strength = match.group(3)
+    suffix = next_line
+    full_cube_mark = f"{cube_mark_base}{suffix}"
+    prefix, number, _ = parse_cube_mark(full_cube_mark)
+    cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 2
+
+
+def _handle_case3(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 3: Cube mark with trailing dash, number+suffix on next line (e.g., 20250621-45D- then 1A)."""
+    if i + 1 >= len(lines):
+        return None
+    next_line = lines[i + 1].strip()
+    id_match = re.match(r"(\d+)([A-Z])$", next_line)
+    if not id_match:
+        return None
+    cube_mark_base = match.group(1)
+    number = id_match.group(1)
+    suffix = id_match.group(2)
+    strength = match.group(3)
+    cube = _build_cube_record(cube_mark_base, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 2
+
+
+def _handle_case4(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 4: Partial cube mark, dash+number+suffix on next line (e.g., 20250621-45D then -1A)."""
+    if i + 1 >= len(lines):
+        return None
+    next_line = lines[i + 1].strip()
+    id_match = re.match(r"-\s*(\d+)([A-Z])$", next_line)
+    if not id_match:
+        return None
+    cube_mark_base = match.group(1)
+    number = id_match.group(1)
+    suffix = id_match.group(2)
+    strength = match.group(3)
+    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
+    prefix, _, _ = parse_cube_mark(full_cube_mark)
+    cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 2
+
+
+def _handle_case5(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 5: Partial cube mark, dash+number+suffix two lines down (e.g., 20250621-45D, blank, then -1A)."""
+    if i + 2 >= len(lines):
+        return None
+    next_next_line = lines[i + 2].strip()
+    id_match = re.match(r"-\s*(\d+)([A-Z])$", next_next_line)
+    if not id_match:
+        return None
+    cube_mark_base = match.group(1)
+    number = id_match.group(1)
+    suffix = id_match.group(2)
+    strength = match.group(3)
+    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
+    prefix, _, _ = parse_cube_mark(full_cube_mark)
+    cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 3
+
+
+def _get_parsing_cases(report_number: str, date_cast: str, pour_location: str) -> List[ParsingCase]:
+    """Define all parsing cases with their patterns and handlers."""
+    return [
+        ParsingCase(
+            name="case1_full_mark",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+-\d+[A-Z])\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case1(m, l, i, report_number, date_cast, pour_location),
+        ),
+        ParsingCase(
+            name="case2_suffix_next_line",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+-\d+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case2(m, l, i, report_number, date_cast, pour_location),
+        ),
+        ParsingCase(
+            name="case3_number_suffix_next_line",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+-)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case3(m, l, i, report_number, date_cast, pour_location),
+        ),
+        ParsingCase(
+            name="case4_dash_number_suffix_next_line",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case4(m, l, i, report_number, date_cast, pour_location),
+        ),
+        ParsingCase(
+            name="case5_dash_number_suffix_two_lines_down",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case5(m, l, i, report_number, date_cast, pour_location),
+        ),
+    ]
+
+
 def _extract_all_cubes_from_text(page_text: str) -> List[Dict[str, str]]:
+    """Extract all cube records from page text using defined parsing cases."""
     if not page_text:
         return []
 
@@ -136,145 +265,26 @@ def _extract_all_cubes_from_text(page_text: str) -> List[Dict[str, str]]:
     date_cast = _extract_date_cast(page_text)
     pour_location = _extract_pour_location(page_text)
 
+    parsing_cases = _get_parsing_cases(report_number, date_cast, pour_location)
     lines = page_text.split("\n")
     i = 0
+
     while i < len(lines):
         line = lines[i].strip()
+        matched = False
 
-        case1_match = re.search(
-            r"CU\d+\s+(\d{8}-\d+[A-Z]+-\d+[A-Z])\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
-            line,
-        )
-        if case1_match:
-            full_cube_mark = case1_match.group(1)
-            strength = case1_match.group(3)
-            prefix, number, suffix = parse_cube_mark(full_cube_mark)
-            cubes.append(
-                _build_cube_record(
-                    prefix,
-                    number,
-                    suffix,
-                    report_number,
-                    date_cast,
-                    strength,
-                    pour_location,
-                )
-            )
+        for case in parsing_cases:
+            match = re.search(case.pattern, line)
+            if match:
+                result = case.handler(match, lines, i)
+                if result:
+                    cube, next_i = result
+                    cubes.append(cube)
+                    i = next_i
+                    matched = True
+                    break
+
+        if not matched:
             i += 1
-            continue
-
-        case2_match = re.search(
-            r"CU\d+\s+(\d{8}-\d+[A-Z]+-\d+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
-            line,
-        )
-        if case2_match:
-            if i + 1 < len(lines):
-                next_line = lines[i + 1].strip()
-                if len(next_line) == 1 and next_line.isalpha() and next_line.isupper():
-                    cube_mark_base = case2_match.group(1)
-                    strength = case2_match.group(3)
-                    suffix = next_line
-                    full_cube_mark = f"{cube_mark_base}{suffix}"
-                    prefix, number, _ = parse_cube_mark(full_cube_mark)
-                    cubes.append(
-                        _build_cube_record(
-                            prefix,
-                            number,
-                            suffix,
-                            report_number,
-                            date_cast,
-                            strength,
-                            pour_location,
-                        )
-                    )
-                    i += 2
-                    continue
-
-        case3_match = re.search(
-            r"CU\d+\s+(\d{8}-\d+[A-Z]+-)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
-            line,
-        )
-        if case3_match:
-            if i + 1 < len(lines):
-                next_line = lines[i + 1].strip()
-                id_match = re.match(r"(\d+)([A-Z])$", next_line)
-                if id_match:
-                    cube_mark_base = case3_match.group(1)
-                    number = id_match.group(1)
-                    suffix = id_match.group(2)
-                    strength = case3_match.group(3)
-                    cubes.append(
-                        _build_cube_record(
-                            cube_mark_base,
-                            number,
-                            suffix,
-                            report_number,
-                            date_cast,
-                            strength,
-                            pour_location,
-                        )
-                    )
-                    i += 2
-                    continue
-
-        case4_match = re.search(
-            r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
-            line,
-        )
-        if case4_match:
-            if i + 1 < len(lines):
-                next_line = lines[i + 1].strip()
-                id_match = re.match(r"-\s*(\d+)([A-Z])$", next_line)
-                if id_match:
-                    cube_mark_base = case4_match.group(1)
-                    number = id_match.group(1)
-                    suffix = id_match.group(2)
-                    strength = case4_match.group(3)
-                    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
-                    prefix, _, _ = parse_cube_mark(full_cube_mark)
-                    cubes.append(
-                        _build_cube_record(
-                            prefix,
-                            number,
-                            suffix,
-                            report_number,
-                            date_cast,
-                            strength,
-                            pour_location,
-                        )
-                    )
-                    i += 2
-                    continue
-
-        case5_match = re.search(
-            r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
-            line,
-        )
-        if case5_match:
-            if i + 2 < len(lines):
-                next_next_line = lines[i + 2].strip()
-                id_match = re.match(r"-\s*(\d+)([A-Z])$", next_next_line)
-                if id_match:
-                    cube_mark_base = case5_match.group(1)
-                    number = id_match.group(1)
-                    suffix = id_match.group(2)
-                    strength = case5_match.group(3)
-                    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
-                    prefix, _, _ = parse_cube_mark(full_cube_mark)
-                    cubes.append(
-                        _build_cube_record(
-                            prefix,
-                            number,
-                            suffix,
-                            report_number,
-                            date_cast,
-                            strength,
-                            pour_location,
-                        )
-                    )
-                    i += 3
-                    continue
-
-        i += 1
 
     return cubes

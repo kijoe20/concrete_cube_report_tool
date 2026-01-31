@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment
 from openpyxl.worksheet.worksheet import Worksheet
 
-import config
+from .. import config
+from .data_validator import get_concrete_type
 
 
 def write_to_excel(cube_data: List[Dict[str, str]], output_path: str) -> None:
@@ -36,23 +37,6 @@ def write_to_excel(cube_data: List[Dict[str, str]], output_path: str) -> None:
         merge_pour_locations(ws, config.POUR_LOCATION_COL)
 
     wb.save(output_path)
-
-
-def get_concrete_type(cube_mark_prefix: str) -> str:
-    """Determine concrete type from cube mark prefix."""
-    mark = (cube_mark_prefix or "").upper()
-    is45 = "45D" in mark
-    is60 = "60D" in mark
-    is_wp = "WP" in mark
-    if is45 and is_wp:
-        return "45DWP"
-    if is60 and is_wp:
-        return "60DWP"
-    if is45:
-        return "45D"
-    if is60:
-        return "60D"
-    return "Unknown"
 
 
 def create_raw_sheet(wb: Workbook, cube_data: List[Dict[str, str]]) -> None:
@@ -130,7 +114,7 @@ def _set_vertical_center(cell) -> None:
     cell.alignment = cell.alignment.copy(vertical="center")
 
 
-def _maybe_int(value):
+def _maybe_int(value: Any) -> Union[int, str]:
     if value is None or value == "":
         return ""
     try:
@@ -139,7 +123,7 @@ def _maybe_int(value):
         return value
 
 
-def _maybe_float(value):
+def _maybe_float(value: Any) -> Union[float, str]:
     if value is None or value == "":
         return ""
     try:

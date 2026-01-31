@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
-import config
+from .. import config
 
 
 EXPECTED_FIELDS = [
@@ -85,7 +85,7 @@ def validate_cube_data(cube_data: List[Dict[str, str]]) -> Dict[str, object]:
             if not _is_valid_date(date_cast):
                 warnings.append(f"Row {idx}: invalid date_cast '{date_cast}'")
 
-        cube_type = _get_concrete_type(prefix)
+        cube_type = get_concrete_type(prefix)
         counts_by_type[cube_type] = counts_by_type.get(cube_type, 0) + 1
         if strength is not None:
             strength_by_type.setdefault(cube_type, []).append(strength)
@@ -103,7 +103,7 @@ def validate_cube_data(cube_data: List[Dict[str, str]]) -> Dict[str, object]:
     return {"errors": errors, "warnings": warnings, "stats": stats}
 
 
-def _parse_strength(value):
+def _parse_strength(value: Any) -> Optional[float]:
     if value in ("", None):
         return None
     try:
@@ -120,8 +120,9 @@ def _is_valid_date(value: str) -> bool:
         return False
 
 
-def _get_concrete_type(mark: str) -> str:
-    mark = (mark or "").upper()
+def get_concrete_type(cube_mark_prefix: str) -> str:
+    """Determine concrete type from cube mark prefix."""
+    mark = (cube_mark_prefix or "").upper()
     is45 = "45D" in mark
     is60 = "60D" in mark
     is_wp = "WP" in mark

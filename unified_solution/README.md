@@ -15,17 +15,17 @@ pip install -r requirements.txt
 
 ### Single PDF
 ```bash
-python cube_automation.py input.pdf output.xlsx
+python -m unified_solution input.pdf output.xlsx
 ```
 
 ### Batch Processing (Folder)
 ```bash
-python cube_automation.py ./pdfs/ --folder --output-dir ./reports/
+python -m unified_solution ./pdfs/ --folder --output-dir ./reports/
 ```
 
 ### Enable Validation
 ```bash
-python cube_automation.py input.pdf output.xlsx --validate
+python -m unified_solution input.pdf output.xlsx --validate
 ```
 
 ## Windows Batch Wrapper

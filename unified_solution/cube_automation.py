@@ -7,14 +7,10 @@ import logging
 import sys
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-import config
-from modules.data_validator import validate_cube_data
-from modules.excel_writer import write_to_excel
-from modules.pdf_extractor import extract_cubes_from_pdf
+from . import config
+from .modules.data_validator import validate_cube_data
+from .modules.excel_writer import write_to_excel
+from .modules.pdf_extractor import extract_cubes_from_pdf
 
 
 def process_single_pdf(
@@ -24,7 +20,7 @@ def process_single_pdf(
     logger: logging.Logger | None = None,
 ) -> None:
     """Process single PDF to Excel."""
-    logger = logger or logging.getLogger(__name__)
+    logger = logger or logging.getLogger("cube_automation")
     logger.info("Processing: %s", pdf_path)
 
     cube_data = extract_cubes_from_pdf(pdf_path)
@@ -47,7 +43,7 @@ def process_batch(
     logger: logging.Logger | None = None,
 ) -> None:
     """Process all PDFs in folder."""
-    logger = logger or logging.getLogger(__name__)
+    logger = logger or logging.getLogger("cube_automation")
     folder = Path(folder_path)
     if not folder.exists() or not folder.is_dir():
         raise FileNotFoundError(f"Folder not found: {folder_path}")
@@ -106,7 +102,7 @@ def main() -> None:
 def _setup_logging(log_path: Path) -> logging.Logger:
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    logger = logging.getLogger()
+    logger = logging.getLogger("cube_automation")
     logger.setLevel(logging.INFO)
     logger.handlers = []
 
@@ -151,5 +147,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:  # pylint: disable=broad-except
-        logging.getLogger(__name__).exception("Fatal error: %s", exc)
+        logging.getLogger("cube_automation").exception("Fatal error: %s", exc)
         sys.exit(1)
