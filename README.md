@@ -14,6 +14,13 @@ approach that best fits your tooling (Excel/VBA, command line, or web UI).
 | VBA Excel macro | Formats data inside an Excel template | Stable, no further updates | `VBA_solution/` |
 | Streamlit web app | Web UI for extraction and report generation | Under development | `streamlit_solution/` |
 
+## Repository introduction and future roadmap
+
+For a detailed repository introduction, architecture snapshot, and phased
+development plan, see:
+
+- [`REPO_INTRODUCTION_AND_ROADMAP.md`](REPO_INTRODUCTION_AND_ROADMAP.md)
+
 ## Recommended workflow (Unified Python solution)
 
 1. Install dependencies:
