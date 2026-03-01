@@ -135,12 +135,12 @@ This keeps feature growth focused and lowers long-term maintenance effort.
 
 ## Priority Backlog (Recommended Order)
 
-1. Define canonical schema and data model object.
-2. Consolidate parsing logic into one shared module.
-3. Add tests for known extraction cases (especially line-break variants).
-4. Add CI checks (tests + lint + format).
-5. Stabilize Streamlit to consume shared logic only.
-6. Add LICENSE and contributor docs.
+1. Add LICENSE and contributor docs.
+2. Define canonical schema and data model object.
+3. Consolidate parsing logic into one shared module.
+4. Add tests for known extraction cases (especially line-break variants).
+5. Add CI checks (tests + lint + format).
+6. Stabilize Streamlit to consume shared logic only.
 7. Add sample anonymized PDFs for regression testing.
 8. Add batch-level summary report (success, warning, error counts).
 9. Add optional CSV output mode to unified CLI.
