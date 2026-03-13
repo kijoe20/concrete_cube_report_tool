@@ -224,6 +224,27 @@ def _handle_case5(
     return cube, i + 3
 
 
+def _handle_case6(
+    match: re.Match, lines: List[str], i: int, report_number: str, date_cast: str, pour_location: str
+) -> Optional[Tuple[Dict[str, str], int]]:
+    """Handle case 6: Partial cube mark with dash+number+suffix on same line after a space.
+
+    Example line:
+        CU073184 20260119-45D -1A 45D 125 / 125 100.1 x 100.2 x 100.1 2.377 2370 639.3 63.7 S -
+
+    The cube mark base (e.g. '20260119-45D') and the identifier part (e.g. '-1A') appear
+    on the same line separated by whitespace, unlike cases 4/5 where the identifier is on
+    a subsequent line.
+    """
+    cube_mark_base = match.group(1)
+    number = match.group(2)
+    suffix = match.group(3)
+    strength = match.group(5)
+    prefix = f"{cube_mark_base}-"
+    cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
+    return cube, i + 1
+
+
 def _get_parsing_cases(report_number: str, date_cast: str, pour_location: str) -> List[ParsingCase]:
     """Define all parsing cases with their patterns and handlers."""
     return [
@@ -241,6 +262,11 @@ def _get_parsing_cases(report_number: str, date_cast: str, pour_location: str) -
             name="case3_number_suffix_next_line",
             pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+-)\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
             handler=lambda m, l, i: _handle_case3(m, l, i, report_number, date_cast, pour_location),
+        ),
+        ParsingCase(
+            name="case6_dash_number_suffix_same_line",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+-\s*(\d+)([A-Z])\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            handler=lambda m, l, i: _handle_case6(m, l, i, report_number, date_cast, pour_location),
         ),
         ParsingCase(
             name="case4_dash_number_suffix_next_line",
