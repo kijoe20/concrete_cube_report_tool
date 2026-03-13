@@ -240,8 +240,7 @@ def _handle_case6(
     number = match.group(2)
     suffix = match.group(3)
     strength = match.group(5)
-    full_cube_mark = f"{cube_mark_base}-{number}{suffix}"
-    prefix, _, _ = parse_cube_mark(full_cube_mark)
+    prefix = f"{cube_mark_base}-"
     cube = _build_cube_record(prefix, number, suffix, report_number, date_cast, strength, pour_location)
     return cube, i + 1
 
@@ -266,7 +265,7 @@ def _get_parsing_cases(report_number: str, date_cast: str, pour_location: str) -
         ),
         ParsingCase(
             name="case6_dash_number_suffix_same_line",
-            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+-(\d+)([A-Z])\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
+            pattern=r"CU\d+\s+(\d{8}-\d+[A-Z]+)\s+-\s*(\d+)([A-Z])\s+.*?\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+S\s+-",
             handler=lambda m, l, i: _handle_case6(m, l, i, report_number, date_cast, pour_location),
         ),
         ParsingCase(
